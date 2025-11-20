@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>База товаров (сомони)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 10px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    #result {
+      margin-top: 10px;
+      font-size: 16px;
+      white-space: pre-line;
+    }
+    button.inline {
+      display: inline-block;
+      width: auto;
+      margin: 2px 5px;
+      font-size: 14px;
+      padding: 5px 10px;
+    }
+    b {
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+  <h2>📦 База товаров (сомони)</h2>
+
+  <input type="text" id="itemName" placeholder="Название товара">
+  <input type="number" id="itemPrice" placeholder="Цена в сомони">
+  <button onclick="addItem()">Добавить / Изменить</button>
+
+  <input type="text" id="searchName" placeholder="Найти товар (например, арси)">
+  <button onclick="searchItem()">Искать</button>
+  <button onclick="showAll()">Показать всё</button>
+
+  <div id="result"></div>
+
+  <script>
+    let database = JSON.parse(localStorage.getItem('productDB')) || {};
+
+    function saveDatabase() {
+      localStorage.setItem('productDB', JSON.stringify(database));
+    }
+
+    function addItem() {
+      const nameField = document.getElementById('itemName');
+      const priceField = document.getElementById('itemPrice');
+      const name = nameField.value.trim().toLowerCase();
+      const price = parseFloat(priceField.value);
+
+      if (name && !isNaN(price)) {
+        const isNew = database[name] === undefined;
+        database[name] = price;
+        saveDatabase();
+        nameField.value = "";
+        priceField.value = "";
+        showAll();
+        document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+      } else {
+        document.getElementById('result').innerText = "⚠️ Введите корректное название и цену.";
+      }
+    }
+
+    function searchItem() {
+      const query = document.getElementById('searchName').value.trim().toLowerCase();
+      let found = "";
+
+      for (let name in database) {
+        if (name.includes(query)) {
+          found += formatEntry(name);
+        }
+      }
+
+      document.getElementById('result').innerHTML = found || `🔍 Ничего не найдено по запросу "${query}".`;
+    }
+
+    function showAll() {
+      let output = "";
+      for (let name in database) {
+        output += formatEntry(name);
+      }
+      document.getElementById('result').innerHTML = output || "📭 База пуста.";
+    }
+
+    function formatEntry(name) {
+      const price = database[name];
+      return `• <b>${name}</b> — ${price} сомони 
+      <button class="inline" onclick="editItem('${name}')">Изменить</button> 
+      <button class="inline" onclick="deleteItem('${name}')">Удалить</button>\n`;
+    }
+
+    function editItem(name) {
+      const newPrice = prompt(`Введите новую цену для "${name}" (сомони):`, database[name]);
+      if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
+        database[name] = parseFloat(newPrice);
+        saveDatabase();
+        showAll();
+      }
+    }
+
+    function deleteItem(name) {
+      if (confirm(`Удалить "${name}"?`)) {
+        delete database[name];
+        saveDatabase();
+        showAll();
+      }
+    }
+  </script>
+</body>
+</html>
